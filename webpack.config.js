@@ -7,6 +7,9 @@ var Debug = process.env.DEBUG || true;
 
 module.exports = {
     entry: {
+        vendor: [
+            'zepto/dist/zepto.min.js'
+        ],
         Home: './src/modules/app/home/index.js',
         List: './src/modules/app/list/index.js',
         Detail: './src/modules/app/detail/index.js'
@@ -18,7 +21,9 @@ module.exports = {
         chunkFilename: "[id].chunk.js?[hash:8]"
     },
     plugins: [
-        commonsPlugin,
+        new webpack.ProvidePlugin({
+            $: 'zepto'
+        }),
         new ExtractTextPlugin('[name].css', { allChunks: true }),
         // Enable multi-pass compilation for enhanced performance
         // in larger projects. Good default.
@@ -39,9 +44,10 @@ module.exports = {
          * excludeChunks - 排除指定的文件（打包后输出的JS/CSS），比如：excludeChunks: ['dev-helper']
          * hash
          */
-        new HtmlWebpackPlugin({ filename: 'index.html', template: 'src/modules/app/home/index.html', chunks: ['vendor', 'Home'], hash: true }),
+        new HtmlWebpackPlugin({ filename: 'index.html', template: 'src/modules/app/home/index.html', chunks: ['vendor', 'Home'], hash: true })
+        /*,
         new HtmlWebpackPlugin({ filename: 'list.html', template: 'src/modules/app/list/index.html', chunks: ['vendor', 'List'], hash: true }),
-        new HtmlWebpackPlugin({ filename: 'detail.html', template: 'src/modules/app/detail/index.html', chunks: ['vendor', 'Detail'], hash: true })
+        new HtmlWebpackPlugin({ filename: 'detail.html', template: 'src/modules/app/detail/index.html', chunks: ['vendor', 'Detail'], hash: true })*/
     ],
 
     module: {
@@ -71,9 +77,7 @@ module.exports = {
     },
     resolve: {
         alias: {
-            'lib': '../../../../libs',
-            'components': '../../components',
-            'base2base': '../../../../libs/base/'
+            'components': '../../components'
         },
         extensions: ['', '.js', '.json', '.coffee']
     }
