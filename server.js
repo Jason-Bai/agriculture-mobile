@@ -51,5 +51,5 @@ app.use('/wechat', wechat(wechatConfig, function (req, res, next) {
 }));
 
 app.listen(app.get('port'), function () {
-  console.log('Wechat Server running at ' + app.get('port' + ' port!'));
+  console.log('Wechat Server running at ' + app.get('port') + ' port!');
 })
