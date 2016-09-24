@@ -1,55 +1,84 @@
-const path = require('path');
+var webpack = require('webpack');
+var commonsPlugin = new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.js');
+var ExtractTextPlugin = require("extract-text-webpack-plugin");
+var HtmlWebpackPlugin = require('html-webpack-plugin');
 
-const merge = require('webpack-merge');
+var Debug = process.env.DEBUG || true;
 
-const validate = require('webpack-validator');
-
-var parts = require('./libs/webpack/parts');
-
-const PATHS = {
-    src: 'src',
-    release: 'release'
-};
-
-const common = {
+module.exports = {
     entry: {
-        Index: path.join(__dirname, PATHS.src + '/modules/app/home/index.js'),
-        List: path.join(__dirname, PATHS.src + '/modules/app/list/index.js'),
-        Detail: path.join(__dirname, PATHS.src + '/modules/app/detail/index.js')
+        vendor: [
+            'zepto/dist/zepto.min.js'
+        ],
+        Home: './src/modules/app/home/index.js',
+        List: './src/modules/app/list/index.js',
+        Detail: './src/modules/app/detail/index.js'
     },
     output: {
-        path: path.join(__dirname, 'release'), // This is where images & js will go
-        //publicPath: 'http://xxx.com/webpack-demo/', // This is used to generate URLs to e.g. images
-        publicPath: '../', // This is used to generate URLs to e.g. images
+        path: './release',
+        publicPath: './',
         filename: '[name].js',
         chunkFilename: "[id].chunk.js?[hash:8]"
+    },
+    plugins: [
+        new webpack.ProvidePlugin({
+            $: 'zepto'
+        }),
+        new ExtractTextPlugin('[name].css', { allChunks: true }),
+        // Enable multi-pass compilation for enhanced performance
+        // in larger projects. Good default.
+        new webpack.HotModuleReplacementPlugin({
+            multiStep: true
+        }),
+        // 全局变量，一定要用JSON.stringify()包起来
+        new webpack.DefinePlugin({
+            __DEV__: JSON.stringify(JSON.parse(Debug)),
+            __MASK_WECHAT__: JSON.stringify('http://a.img.pp.cn/upload_files/2015/11/18/common/activity/mask/img_browser_download.png') // 微信环境下蒙层图片
+        }),
+        /**
+         * HTML文件编译，自动引用JS/CSS
+         * 
+         * filename - 输出文件名，相对路径output.path
+         * template - HTML模板，相对配置文件目录
+         * chunks - 只包含指定的文件（打包后输出的JS/CSS）,不指定的话，它会包含生成的所有js和css文件
+         * excludeChunks - 排除指定的文件（打包后输出的JS/CSS），比如：excludeChunks: ['dev-helper']
+         * hash
+         */
+        new HtmlWebpackPlugin({ filename: 'index.html', template: 'src/modules/app/home/index.html', chunks: ['vendor', 'Home'], hash: true })
+        /*,
+        new HtmlWebpackPlugin({ filename: 'list.html', template: 'src/modules/app/list/index.html', chunks: ['vendor', 'List'], hash: true }),
+        new HtmlWebpackPlugin({ filename: 'detail.html', template: 'src/modules/app/detail/index.html', chunks: ['vendor', 'Detail'], hash: true })*/
+    ],
+
+    module: {
+        loaders: [
+            {
+                test: /\.js$/,
+                loader: 'babel-loader',
+                exclude: /(node_modules|libs|ppweb\\libs\\webpack|ppweb\/libs\/webpack)/
+            }, {
+                test: /\.css$/,
+                loader: ExtractTextPlugin.extract("style-loader", "css-loader") 
+            }, {
+                test: /\.less$/,
+                loader: ExtractTextPlugin.extract('style-loader', 'css-loader!less-loader') 
+            }, { 
+                test: /\.tpl$/, 
+                loader: 'ejs' 
+            }, {
+                test: /\.(png|jpg|gif)$/, 
+                loader: 'url-loader',
+                query: {
+                    name: '[path][name].[ext]?[hash:8]',
+                    limit: 8192
+                }
+            }
+        ]
+    },
+    resolve: {
+        alias: {
+            'components': '../../components'
+        },
+        extensions: ['', '.js', '.json', '.coffee']
     }
 };
-
-var config;
-
-switch (process.env.npm_lifecycle_event) {
-    case 'build':
-        config = merge(
-            common,
-            parts.setupLoaders(PATHS.app),
-            parts.setUpPlugins()
-        );
-        break;
-    default:
-        config = merge(
-            common,
-            {
-                devtool: 'eval-source-map'
-            },
-            parts.setupLoaders(PATHS.app),
-            parts.setUpResolve(),
-            parts.setUpPlugins(),
-            parts.devServer({
-                host: process.env.HOST,
-                port: process.env.PORT
-            })
-        );
-}
-
-module.exports = validate(config);
