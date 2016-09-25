@@ -3,7 +3,7 @@
   "description": "使用webpack进行构建开发的demo",
   "main": "server.js",
   "version": "1.0.0",
-    "devDependencies": {
+  "devDependencies": {
     "react-scripts": "^0.4.0",
     "redux-devtools": "^3.3.1",
     "redux-devtools-dock-monitor": "^1.1.1",
@@ -11,6 +11,7 @@
     "redux-logger": "^2.6.1"
   },
   "dependencies": {
+    "express": "^4.14.0",
     "humps": "^1.1.0",
     "normalizr": "^2.2.1",
     "react": "^15.3.0",
@@ -18,10 +19,11 @@
     "react-redux": "^4.4.5",
     "react-router": "^2.6.1",
     "react-router-redux": "^4.0.5",
+    "react-weui": "^0.4.0",
     "redux": "^3.5.2",
     "redux-thunk": "^2.1.0",
-    "express": "^4.14.0",
-    "wechat": "^2.0.3"
+    "wechat": "^2.0.3",
+    "weui": "^1.0.0"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -4,6 +4,10 @@ import { browserHistory } from 'react-router'
 import Explore from '../components/Explore'
 import { resetErrorMessage } from '../actions'
 
+// extended
+
+import Slider from './Slider'
+
 class App extends Component {
 
   handleDismissClick(e) {
@@ -35,12 +39,19 @@ class App extends Component {
 
   render() {
     const { children, inputValue } = this.props
+    /*
     return (
       <div>
         <Explore value={inputValue}
                  onChange={this.handleChange} />
         <hr />
         {this.renderErrorMessage()}
+        {children}
+      </div>
+    )
+    */
+    return (
+      <div className="container">
         {children}
       </div>
     )

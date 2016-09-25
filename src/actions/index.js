@@ -25,6 +25,12 @@ export const loadUser = (login, requiredFields = []) => (dispatch, getState) => 
   return dispatch(fetchUser(login))
 }
 
+export const CATEGORIES_REQUEST = 'CATEGORIES_REQUEST'
+export const CATEGORIES_SUCCESS = 'CATEGORIES_SUCCESS'
+export const CATEGORIES_FAILURE = 'CATEGORIES_FAILURE'
+
+
+
 export const REPO_REQUEST = 'REPO_REQUEST'
 export const REPO_SUCCESS = 'REPO_SUCCESS'
 export const REPO_FAILURE = 'REPO_FAILURE'
