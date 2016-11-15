@@ -4,18 +4,22 @@ import { browserHistory } from 'react-router'
 import Explore from '../components/Explore'
 import { resetErrorMessage } from '../actions'
 
-// extended
-
-import Slider from './Slider'
-
 class App extends Component {
+  static propTypes = {
+    // Injected by React Redux
+    errorMessage: PropTypes.string,
+    resetErrorMessage: PropTypes.func.isRequired,
+    inputValue: PropTypes.string.isRequired,
+    // Injected by React Router
+    children: PropTypes.node
+  }
 
-  handleDismissClick(e) {
+  handleDismissClick = e => {
     this.props.resetErrorMessage()
     e.preventDefault()
   }
 
-  handleChange(nextValue) {
+  handleChange = nextValue => {
     browserHistory.push(`/${nextValue}`)
   }
 
@@ -51,7 +55,8 @@ class App extends Component {
     )
     */
     return (
-      <div className="container">
+      <div>
+        {this.renderErrorMessage()}
         {children}
       </div>
     )
@@ -62,16 +67,6 @@ const mapStateToProps = (state, ownProps) => ({
   errorMessage: state.errorMessage,
   inputValue: ownProps.location.pathname.substring(1)
 })
-
-
-App.propTypes = {
-  // Injected by React Redux
-  errorMessage: PropTypes.string,
-  resetErrorMessage: PropTypes.func.isRequired,
-  inputValue: PropTypes.string.isRequired,
-  // Injected by React Router
-  children: PropTypes.node
-}
 
 export default connect(mapStateToProps, {
   resetErrorMessage

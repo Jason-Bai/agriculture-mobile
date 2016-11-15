@@ -12,6 +12,15 @@ const loadData = ({ login, loadUser, loadStarred }) => {
 }
 
 class UserPage extends Component {
+  static propTypes = {
+    login: PropTypes.string.isRequired,
+    user: PropTypes.object,
+    starredPagination: PropTypes.object,
+    starredRepos: PropTypes.array.isRequired,
+    starredRepoOwners: PropTypes.array.isRequired,
+    loadUser: PropTypes.func.isRequired,
+    loadStarred: PropTypes.func.isRequired
+  }
 
   componentWillMount() {
     loadData(this.props)
@@ -23,7 +32,7 @@ class UserPage extends Component {
     }
   }
 
-  handleLoadMoreClick() {
+  handleLoadMoreClick = () => {
     this.props.loadStarred(this.props.login, true)
   }
 
@@ -78,16 +87,6 @@ const mapStateToProps = (state, ownProps) => {
     starredPagination,
     user: users[login]
   }
-}
-
-UserPage.propTypes = {
-  login: PropTypes.string.isRequired,
-  user: PropTypes.object,
-  starredPagination: PropTypes.object,
-  starredRepos: PropTypes.array.isRequired,
-  starredRepoOwners: PropTypes.array.isRequired,
-  loadUser: PropTypes.func.isRequired,
-  loadStarred: PropTypes.func.isRequired
 }
 
 export default connect(mapStateToProps, {

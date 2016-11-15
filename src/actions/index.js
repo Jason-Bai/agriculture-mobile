@@ -1,4 +1,5 @@
 import { CALL_API, Schemas } from '../middleware/api'
+import isEmpty from 'lodash/isEmpty'
 
 export const USER_REQUEST = 'USER_REQUEST'
 export const USER_SUCCESS = 'USER_SUCCESS'
@@ -24,12 +25,6 @@ export const loadUser = (login, requiredFields = []) => (dispatch, getState) => 
 
   return dispatch(fetchUser(login))
 }
-
-export const CATEGORIES_REQUEST = 'CATEGORIES_REQUEST'
-export const CATEGORIES_SUCCESS = 'CATEGORIES_SUCCESS'
-export const CATEGORIES_FAILURE = 'CATEGORIES_FAILURE'
-
-
 
 export const REPO_REQUEST = 'REPO_REQUEST'
 export const REPO_SUCCESS = 'REPO_SUCCESS'
@@ -124,3 +119,25 @@ export const RESET_ERROR_MESSAGE = 'RESET_ERROR_MESSAGE'
 export const resetErrorMessage = () => ({
     type: RESET_ERROR_MESSAGE
 })
+
+export const CATEGORIES_REQUEST = 'CATEGORIES_REQUEST'
+export const CATEGORIES_SUCCESS = 'CATEGORIES_SUCCESS'
+export const CATEGORIES_FAILURE = 'CATEGORIES_FAILURE'
+
+const fetchCategories = () => ({
+  [CALL_API]: {
+    types: [ REPO_REQUEST, REPO_SUCCESS, REPO_FAILURE ],
+    endpoint: 'categories',
+    schema: Schemas.CATEGORY
+  }
+})
+
+// Fetches a single user from Github API unless it is cached.
+// Relies on Redux Thunk middleware.
+export const loadCategories = () => (dispatch, getState) => {
+  const categories = getState().entities.categories
+  if (!isEmpty(categories)) {
+    return null
+  }
+  return dispatch(fetchCategories(name))
+}

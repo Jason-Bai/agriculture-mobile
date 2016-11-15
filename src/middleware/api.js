@@ -1,6 +1,5 @@
 import { Schema, arrayOf, normalize } from 'normalizr'
 import { camelizeKeys } from 'humps'
-import 'isomorphic-fetch'
 
 // Extracts the next page URL from Github API response.
 const getNextPageUrl = response => {
@@ -17,7 +16,8 @@ const getNextPageUrl = response => {
   return nextLink.split(';')[0].slice(1, -1)
 }
 
-const API_ROOT = 'https://api.github.com/'
+const API_ROOT = 'http://localhost:8000/'
+
 
 // Fetches an API response and normalizes the result JSON according to schema.
 // This makes every API response have the same shape, regardless of how nested it was.
@@ -26,20 +26,20 @@ const callApi = (endpoint, schema) => {
 
   return fetch(fullUrl)
     .then(response =>
-      response.json().then(json => ({ json, response }))
-    ).then(({ json, response }) => {
-      if (!response.ok) {
-        return Promise.reject(json)
-      }
+      response.json().then(json => {
+        if (!response.ok) {
+          return Promise.reject(json)
+        }
 
-      const camelizedJson = camelizeKeys(json)
-      const nextPageUrl = getNextPageUrl(response)
+        const camelizedJson = camelizeKeys(json)
+        const nextPageUrl = getNextPageUrl(response)
 
-      return Object.assign({},
-        normalize(camelizedJson, schema),
-        { nextPageUrl }
-      )
-    })
+        return Object.assign({},
+          normalize(camelizedJson, schema),
+          { nextPageUrl }
+        )
+      })
+    )
 }
 
 // We use this Normalizr schemas to transform API responses from a nested form
@@ -63,6 +63,10 @@ const repoSchema = new Schema('repos', {
   idAttribute: repo => repo.fullName.toLowerCase()
 })
 
+const categorySchema = new Schema('categories', {
+  idAttribute: category => category.id
+})
+
 repoSchema.define({
   owner: userSchema
 })
@@ -72,7 +76,8 @@ export const Schemas = {
   USER: userSchema,
   USER_ARRAY: arrayOf(userSchema),
   REPO: repoSchema,
-  REPO_ARRAY: arrayOf(repoSchema)
+  REPO_ARRAY: arrayOf(repoSchema),
+  CATEGORY: categorySchema
 }
 
 // Action key that carries API call info interpreted by this Redux middleware.
