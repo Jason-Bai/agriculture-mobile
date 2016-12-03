@@ -1,143 +1,136 @@
-import { CALL_API, Schemas } from '../middleware/api'
-import isEmpty from 'lodash/isEmpty'
+import { loginHttp, categoriesHttp } from '../libs/httpClient'
 
-export const USER_REQUEST = 'USER_REQUEST'
-export const USER_SUCCESS = 'USER_SUCCESS'
-export const USER_FAILURE = 'USER_FAILURE'
+import utils from '../libs/utils'
 
-// Fetches a single user from Github API.
-// Relies on the custom API middleware defined in ../middleware/api.js.
-const fetchUser = login => ({
-  [CALL_API]: {
-    types: [ USER_REQUEST, USER_SUCCESS, USER_FAILURE ],
-    endpoint: `users/${login}`,
-    schema: Schemas.USER
+export const LOGIN_REQUEST = 'LOGIN_REQUEST'
+export const LOGIN_SUCCESS = 'LOGIN_SUCCESS'
+export const LOGIN_FAILURE = 'LOGIN_FAILURE'
+
+function requestLogin(creds) {
+  return {
+    type: LOGIN_REQUEST,
+    isFetching: true,
+    isAuthenticated: false,
+    creds
   }
-})
-
-// Fetches a single user from Github API unless it is cached.
-// Relies on Redux Thunk middleware.
-export const loadUser = (login, requiredFields = []) => (dispatch, getState) => {
-  const user = getState().entities.users[login]
-  if (user && requiredFields.every(key => user.hasOwnProperty(key))) {
-    return null
-  }
-
-  return dispatch(fetchUser(login))
 }
 
-export const REPO_REQUEST = 'REPO_REQUEST'
-export const REPO_SUCCESS = 'REPO_SUCCESS'
-export const REPO_FAILURE = 'REPO_FAILURE'
-
-// Fetches a single repository from Github API.
-// Relies on the custom API middleware defined in ../middleware/api.js.
-const fetchRepo = fullName => ({
-  [CALL_API]: {
-    types: [ REPO_REQUEST, REPO_SUCCESS, REPO_FAILURE ],
-    endpoint: `repos/${fullName}`,
-    schema: Schemas.REPO
+function receiveLogin(user) {
+  return {
+    type: LOGIN_SUCCESS,
+    isFetching: false,
+    isAuthenticated: true,
+    id_token: user.token
   }
-})
-
-// Fetches a single repository from Github API unless it is cached.
-// Relies on Redux Thunk middleware.
-export const loadRepo = (fullName, requiredFields = []) => (dispatch, getState) => {
-  const repo = getState().entities.repos[fullName]
-  if (repo && requiredFields.every(key => repo.hasOwnProperty(key))) {
-    return null
-  }
-
-  return dispatch(fetchRepo(fullName))
 }
 
-export const STARRED_REQUEST = 'STARRED_REQUEST'
-export const STARRED_SUCCESS = 'STARRED_SUCCESS'
-export const STARRED_FAILURE = 'STARRED_FAILURE'
-
-// Fetches a page of starred repos by a particular user.
-// Relies on the custom API middleware defined in ../middleware/api.js.
-const fetchStarred = (login, nextPageUrl) => ({
-  login,
-  [CALL_API]: {
-    types: [ STARRED_REQUEST, STARRED_SUCCESS, STARRED_FAILURE ],
-    endpoint: nextPageUrl,
-    schema: Schemas.REPO_ARRAY
+function loginError(message) {
+  return {
+    type: LOGIN_FAILURE,
+    isFetching: false,
+    isAuthenticated: false,
+    message
   }
-})
-
-// Fetches a page of starred repos by a particular user.
-// Bails out if page is cached and user didn't specifically request next page.
-// Relies on Redux Thunk middleware.
-export const loadStarred = (login, nextPage) => (dispatch, getState) => {
-  const {
-    nextPageUrl = `users/${login}/starred`,
-    pageCount = 0
-  } = getState().pagination.starredByUser[login] || {}
-
-  if (pageCount > 0 && !nextPage) {
-    return null
-  }
-
-  return dispatch(fetchStarred(login, nextPageUrl))
 }
 
-export const STARGAZERS_REQUEST = 'STARGAZERS_REQUEST'
-export const STARGAZERS_SUCCESS = 'STARGAZERS_SUCCESS'
-export const STARGAZERS_FAILURE = 'STARGAZERS_FAILURE'
-
-// Fetches a page of stargazers for a particular repo.
-// Relies on the custom API middleware defined in ../middleware/api.js.
-const fetchStargazers = (fullName, nextPageUrl) => ({
-  fullName,
-  [CALL_API]: {
-    types: [ STARGAZERS_REQUEST, STARGAZERS_SUCCESS, STARGAZERS_FAILURE ],
-    endpoint: nextPageUrl,
-    schema: Schemas.USER_ARRAY
+export function loginUser(creds) {
+  return dispatch => {
+    dispatch(requestLogin(creds))
+    return loginHttp.login(creds)
+      .then(response => {
+        response.json()
+          .then(user => ({user, response}))
+          .then(({user, response}) => {
+            if (!response.ok) {
+              dispatch(loginError(user.message))
+                return Promise.reject(user)
+            } else {
+              utils.store.set('x-access-token', user.token)
+              dispatch(receiveLogin(user))
+            }
+          })
+      }).catch(err => console.log('Error: ', err))
   }
-})
+}
 
-// Fetches a page of stargazers for a particular repo.
-// Bails out if page is cached and user didn't specifically request next page.
-// Relies on Redux Thunk middleware.
-export const loadStargazers = (fullName, nextPage) => (dispatch, getState) => {
-  const {
-    nextPageUrl = `repos/${fullName}/stargazers`,
-    pageCount = 0
-  } = getState().pagination.stargazersByRepo[fullName] || {}
+export const LOGOUT_REQUEST = 'LOGOUT_REQUEST'
+export const LOGOUT_SUCCESS= 'LOGOUT_SUCCESS'
+export const LOGOUT_FAILURE= 'LOGOUT_FAILURE'
 
-  if (pageCount > 0 && !nextPage) {
-    return null
+
+function requestLogout() {
+  return {
+    type: LOGOUT_REQUEST,
+    isFetching: true,
+    isAuthenticated: true
   }
+}
 
-  return dispatch(fetchStargazers(fullName, nextPageUrl))
+function receiveLogout() {
+  return {
+    type: LOGOUT_SUCCESS,
+    isFetching: false,
+    isAuthenticated: false
+  }
+}
+
+
+export function logoutUser() {
+  return dispatch => {
+    dispatch(requestLogout())
+    utils.store.remove('x-access-token')
+    dispatch(receiveLogout())
+  }
 }
 
 export const RESET_ERROR_MESSAGE = 'RESET_ERROR_MESSAGE'
 
-// Resets the currently visible error message.
 export const resetErrorMessage = () => ({
-    type: RESET_ERROR_MESSAGE
+  type: RESET_ERROR_MESSAGE
 })
 
-export const CATEGORIES_REQUEST = 'CATEGORIES_REQUEST'
-export const CATEGORIES_SUCCESS = 'CATEGORIES_SUCCESS'
-export const CATEGORIES_FAILURE = 'CATEGORIES_FAILURE'
+export const CATEGORY_REQUEST = 'CATEGORY_REQUEST'
+export const CATEGORY_SUCCESS = 'CATEGORY_SUCCESS'
+export const CATEGORY_FAILURE = 'CATEGORY_FAILURE'
 
-const fetchCategories = () => ({
-  [CALL_API]: {
-    types: [ REPO_REQUEST, REPO_SUCCESS, REPO_FAILURE ],
-    endpoint: 'categories',
-    schema: Schemas.CATEGORY
+function requestCategories() {
+  return {
+    type: CATEGORY_REQUEST,
+    isFetching: true,
+    errorMessage: '',
+    data: [],
+    total_num: 0
   }
-})
+}
 
-// Fetches a single user from Github API unless it is cached.
-// Relies on Redux Thunk middleware.
-export const loadCategories = () => (dispatch, getState) => {
-  const categories = getState().entities.categories
-  if (!isEmpty(categories)) {
-    return null
+function receiveCategories(categories) {
+  return {
+    type: CATEGORY_SUCCESS,
+    isFetching: false,
+    errorMessage: '',
+    data: categories.data,
+    total_num: categories.total_num
   }
-  return dispatch(fetchCategories(name))
+}
+
+function categoriesError(message) {
+  return {
+    type: CATEGORY_FAILURE,
+    isFetching: false,
+    errorMessage: message
+  }
+}
+
+export function loadCategories(params = {}) {
+  return dispatch => {
+    dispatch(requestCategories(params))
+    return categoriesHttp.list(params)
+      .then(response => {
+        const { data } = response
+        dispatch(receiveCategories(data))
+      }).catch(err => {
+        const { data } = err
+        dispatch(categoriesError(data.message))
+      })
+  }
 }

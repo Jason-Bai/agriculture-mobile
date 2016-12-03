@@ -1,27 +1,31 @@
 import React, { Component } from 'react'
 import { connect } from 'react-redux'
-import CategoriesPage from './CategoriesPage'
+
+import 'weui'
+
+require('./style.css')
+
+import Header from '../components/Header'
+import ContentWrapper from '../containers/ContentWrapper'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 
 class Dashboard extends Component {
-
   render() {
-    const { logined } = this.props
+    const { auth } = this.props
     return (
       <div>
-        { logined && (
-          <span>Welcome to here!</span>
-        )}
-        { !logined && (
-          <span>login here!</span>
-        ) }
-        <CategoriesPage />
+        <Header />
+        <Navbar />
+        <ContentWrapper />
+        <Footer />
       </div>
     )
   }
 }
 
 const mapStateToProps = (state, ownProps) => ({
-  logined: localStorage.getItem('x-auth-token') ? true : false
+  auth: state.auth
 })
 
 export default connect(mapStateToProps)(Dashboard)

@@ -1,56 +1,75 @@
-import * as ActionTypes from '../actions'
-import merge from 'lodash/merge'
-import paginate from './paginate'
-import { routerReducer as routing } from 'react-router-redux'
 import { combineReducers } from 'redux'
+import { routerReducer as routing } from 'react-router-redux'
 
-// Updates an entity cache in response to any action with response.entities.
-const entities = (state = { categories: {}, users: {}, repos: {} }, action) => {
-  if (action.response && action.response.entities) {
-    return merge({}, state, action.response.entities)
+import {
+  LOGIN_REQUEST, LOGIN_SUCCESS, LOGIN_FAILURE, LOGOUT_SUCCESS,
+  CATEGORY_REQUEST, CATEGORY_SUCCESS, CATEGORY_FAILURE
+} from '../actions'
+
+import utils from '../libs/utils'
+
+function auth(state = {
+  isFetching: false,
+  isAuthenticated: utils.store.get('x-access-token') ? true : false
+}, action) {
+  switch(action.type) {
+    case LOGIN_REQUEST:
+      return Object.assign({}, state, {
+        isFetching: true,
+        isAuthenticated: false,
+        user: action.creds
+      })
+    case LOGIN_SUCCESS:
+      return Object.assign({}, state, {
+        isFetching: false,
+        isAuthenticated: true,
+        errorMessage: ''
+      })
+    case LOGIN_FAILURE:
+      return Object.assign({}, state, {
+        isFetching: false,
+        isAuthenticated: false,
+        errorMessage: action.message
+      })
+    case LOGOUT_SUCCESS:
+      return Object.assign({}, state, {
+        isFetching: true,
+        isAuthenticated: false
+      })
+    default:
+      return state
   }
-
-  return state
 }
 
-// Updates error message to notify about the failed fetches.
-const errorMessage = (state = null, action) => {
-  const { type, error } = action
-
-  if (type === ActionTypes.RESET_ERROR_MESSAGE) {
-    return null
-  } else if (error) {
-    return action.error
+function categories(state = {
+  isFetching: false,
+  data: [],
+  total_num: 0,
+  errorMessage: ''
+}, action) {
+  switch(action.type) {
+    case CATEGORY_REQUEST:
+      return Object.assign({}, state, {
+        isFetching: true
+      })
+    case CATEGORY_SUCCESS:
+      return Object.assign({}, state, {
+        isFetching: false,
+        data: action.data,
+        total_num: action.total_num
+      })
+    case CATEGORY_FAILURE:
+      return Object.assign({}, state, {
+        isFetching: false,
+        errorMessage: action.message
+      })
+    default:
+      return state
   }
-
-  return state
 }
 
-// Updates the pagination data for different actions.
-const pagination = combineReducers({
-  starredByUser: paginate({
-    mapActionToKey: action => action.login,
-    types: [
-      ActionTypes.STARRED_REQUEST,
-      ActionTypes.STARRED_SUCCESS,
-      ActionTypes.STARRED_FAILURE
-    ]
-  }),
-  stargazersByRepo: paginate({
-    mapActionToKey: action => action.fullName,
-    types: [
-      ActionTypes.STARGAZERS_REQUEST,
-      ActionTypes.STARGAZERS_SUCCESS,
-      ActionTypes.STARGAZERS_FAILURE
-    ]
-  })
-})
-
-const rootReducer = combineReducers({
-  entities,
-  pagination,
-  errorMessage,
+export default combineReducers({
+  auth,
+  categories,
   routing
 })
-
-export default rootReducer
